@@ -1070,9 +1070,13 @@ def tf2zpk(b, a):
     b = (b + 0.0) / a[0]
     a = (a + 0.0) / a[0]
     k = b[0]
-    b /= b[0]
-    z = roots(b)
-    p = roots(a)
+    if np.any(k):
+        b /= b[0]
+        z = roots(b)
+        p = roots(a)
+    else:
+        z = np.array([])
+        p = np.array([])
     return z, p, k
 
 
@@ -1614,12 +1618,20 @@ def normalize(b, a):
     # Trim leading zeros in denominator, leave at least one.
     den = np.trim_zeros(den, 'f')
 
+    # Count numerator columns that are all exactly zero
+    leading_exact_zeros = 0
+    for col in num.T:
+        if np.all(col == 0):
+            leading_exact_zeros += 1
+        else:
+            break
+
     # Normalize transfer function
     num, den = num / den[0], den / den[0]
 
-    # Count numerator columns that are all zero
-    leading_zeros = 0
-    for col in num.T:
+    # Count numerator columns that are all close zero
+    leading_zeros = leading_exact_zeros
+    for col in num.T[leading_exact_zeros:]:
         if np.allclose(col, 0, atol=1e-14):
             leading_zeros += 1
         else:
@@ -1627,8 +1639,9 @@ def normalize(b, a):
 
     # Trim leading zeros of numerator
     if leading_zeros > 0:
-        warnings.warn("Badly conditioned filter coefficients (numerator): the "
-                      "results may be meaningless", BadCoefficients)
+        if leading_zeros > leading_exact_zeros:
+            warnings.warn("Badly conditioned filter coefficients (numerator): "
+                          "the results may be meaningless", BadCoefficients)
         # Make sure at least one column remains
         if leading_zeros == num.shape[1]:
             leading_zeros -= 1
