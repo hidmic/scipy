@@ -9,7 +9,6 @@ from numpy import (r_, eye, atleast_2d, poly, dot,
 from scipy import linalg
 
 from .filter_design import tf2zpk, zpk2tf, normalize
-from .ltisys import lti
 
 
 __all__ = ['tf2ss', 'abcd_normalize', 'ss2tf', 'zpk2ss', 'ss2zpk',
@@ -401,6 +400,7 @@ def cont2discrete(system, dt, method="zoh", alpha=None):
         pp. 204-206, 1998.
 
     """
+    from .ltisys import lti
     if isinstance(system, lti):
         return system.to_discrete(dt, method, alpha)
     if len(system) == 2:
