@@ -1071,9 +1071,13 @@ def tf2zpk(b, a):
     b = (b + 0.0) / a[0]
     a = (a + 0.0) / a[0]
     k = b[0]
-    b /= b[0]
-    z = roots(b)
-    p = roots(a)
+    if np.any(k):
+        b /= b[0]
+        z = roots(b)
+        p = roots(a)
+    else:
+        z = np.array([])
+        p = np.array([])
     return z, p, k
 
 
